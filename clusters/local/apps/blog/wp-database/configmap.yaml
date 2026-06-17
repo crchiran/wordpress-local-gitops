@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: blog
+data:
+  create-backup-user.sql: |
+    CREATE USER IF NOT EXISTS 'backup'@'%' IDENTIFIED BY 'lab@17DbTest';
+
+    GRANT SELECT,
+          SHOW VIEW,
+          TRIGGER,
+          LOCK TABLES,
+          EVENT
+    ON wordpress.* TO 'backup'@'%';
+
+    FLUSH PRIVILEGES;

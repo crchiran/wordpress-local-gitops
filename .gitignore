@@ -38,6 +38,10 @@ secret.yaml
 secrets.yaml
 *-secret.yaml
 
+# SOPS encrypted secrets
+**/secret.enc.yaml
+**/*.enc.yaml
+
 # Certificates and keys
 *.key
 *.pem
@@ -62,6 +66,11 @@ charts/*.tgz
 # Ignore age private keys
 *.agekey
 .agekey
+
+# Decrypted/plain secret files
+*.dec.yaml
+*.decrypted.yaml
+*.plaintext.yaml
 
 # Keep encrypted manifests
 !*.enc.yaml
