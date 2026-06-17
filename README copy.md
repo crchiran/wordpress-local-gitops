@@ -2,46 +2,13 @@
 
 A production-inspired local Kubernetes GitOps repository using FluxCD, NGINX Ingress, MetalLB, Prometheus, Grafana, Loki, Promtail, SOPS, and WordPress.
 
-> **Local Development & Homelab Environment**
->
-> This repository provides a complete local Kubernetes GitOps deployment of WordPress using:
->
-> * FluxCD
-> * MetalLB
-> * NGINX Ingress
-> * MariaDB
-> * Prometheus
-> * Grafana
-> * Loki
-> * Promtail
-> * SOPS + Age
->
-> It is intended for:
->
-> * Learning Kubernetes GitOps
-> * Local development environments
-> * Homelab deployments
-> * Testing FluxCD workflows
-> * Experimenting with observability and secret management
->
 > **Looking for a production-ready deployment?**
 >
-> For a production-focused implementation with additional security hardening, operational best practices, backup strategies, monitoring, and production GitOps workflows, please refer to:
+> This repository is intended for local development, learning, testing, and homelab environments.
+>
+> For a production-focused implementation with additional hardening, operational best practices, and production-oriented GitOps configurations, please refer to:
 >
 > **Production Repository:** [wordpress-production](https://github.com/crchiran/wordpress-production-gitops.git?utm_source=chatgpt.com)
->
-> The production repository includes:
->
-> * Production-grade GitOps architecture
-> * Hardened Kubernetes workloads
-> * SOPS-encrypted secret management
-> * Production monitoring and logging
-> * Resource requests and limits
-> * Persistent storage configuration
-> * Backup and recovery considerations
-> * Production deployment best practices
-
----
 
 ## Architecture
 
@@ -61,23 +28,6 @@ Git Repository
                   ├── MariaDB
                   └── WordPress
 ```
-
----
-
-## Features
-
-* GitOps deployment using FluxCD
-* WordPress and MariaDB on Kubernetes
-* NGINX Ingress Controller
-* MetalLB LoadBalancer support
-* Prometheus monitoring
-* Grafana dashboards
-* Loki centralized logging
-* SOPS encrypted secrets
-* Age key management
-* Persistent storage for WordPress and MariaDB
-* Kubernetes-native infrastructure management
-* Production-inspired architecture for learning and homelab environments
 
 ---
 
@@ -122,24 +72,8 @@ Git Repository
         ├── apps
         │   ├── blog
         │   │   ├── wordpress
-        │   │   │   ├── kustomization.yaml
-        │   │   │   ├── wordpress-secret.enc.yaml
-        │   │   │   ├── wp-deployment.yaml
-        │   │   │   ├── wp-ingress.yaml
-        │   │   │   ├── wp-pvc.yaml
-        │   │   │   └── wp-svc.yaml
-        │   │   │
         │   │   ├── wp-database
-        │   │   │   ├── configmap.yaml
-        │   │   │   ├── kustomization.yaml
-        │   │   │   ├── mysql-secret.enc.yaml
-        │   │   │   ├── mysql-sts.yaml
-        │   │   │   └── mysql-svc.yaml
-        │   │   │
         │   │   └── wp-namespace
-        │   │       ├── kustomization.yaml
-        │   │       └── ns.yaml
-        │   │
         │   ├── blog-wp-mysql.yaml
         │   ├── blog-wp-ns.yaml
         │   ├── kustomization.yaml
@@ -171,8 +105,6 @@ Creates:
 blog namespace
 ```
 
----
-
 ### Database
 
 ```text
@@ -196,8 +128,6 @@ mysql-secret.enc.yaml
 mysql-sts.yaml
 mysql-svc.yaml
 ```
-
----
 
 ### WordPress
 
@@ -238,12 +168,10 @@ infrastructure/metallb
 Provides:
 
 ```text
-LoadBalancer Services
-IP Address Pools
-Layer 2 Advertisements
+LoadBalancer services
+L2 advertisements
+IP address pools
 ```
-
----
 
 ### Ingress NGINX
 
@@ -254,12 +182,10 @@ infrastructure/ingress-nginx
 Provides:
 
 ```text
-Ingress Controller
-LoadBalancer Service
+Ingress controller
+LoadBalancer service
 IngressClass
 ```
-
----
 
 ### Observability
 
@@ -275,34 +201,6 @@ Grafana
 Loki
 Promtail
 Grafana Dashboards
-```
-
----
-
-## Prerequisites
-
-Before deploying this repository ensure you have:
-
-### Kubernetes
-
-* Kubernetes v1.30+
-* Single-node or multi-node cluster
-* Default StorageClass configured
-
-### Required Tools
-
-```text
-kubectl
-flux
-git
-sops
-age
-```
-
-### Verify StorageClass
-
-```bash
-kubectl get storageclass
 ```
 
 ---
@@ -406,7 +304,7 @@ infra-monitoring
 
 ## Deploy WordPress
 
-Deployment order:
+Deploy order:
 
 ```text
 1. Namespace
@@ -431,7 +329,7 @@ wordpress-xxxxx
 
 ## Access WordPress
 
-Check ingress:
+Check Ingress:
 
 ```bash
 kubectl get ingress -n blog
@@ -443,7 +341,7 @@ Example:
 Host: app.local
 ```
 
-Add local DNS entry:
+Add host entry:
 
 ```bash
 sudo nano /etc/hosts
@@ -469,7 +367,7 @@ Access Grafana:
 http://grafana.local
 ```
 
-Retrieve admin credentials:
+Retrieve admin password:
 
 ```bash
 kubectl get secret grafana-admin \
@@ -481,14 +379,11 @@ kubectl get secret grafana-admin \
 
 ## Useful Commands
 
-### FluxCD
+### Flux
 
 ```bash
 flux get ks
 flux get hr
-flux get sources git
-
-flux reconcile source git flux-system --with-source
 flux reconcile ks <name> --with-source
 ```
 
@@ -496,10 +391,9 @@ flux reconcile ks <name> --with-source
 
 ```bash
 kubectl get pods -A
-kubectl get svc -A
-kubectl get ingress -A
 kubectl get pvc -A
-kubectl get events -A
+kubectl get ingress -A
+kubectl get svc -A
 ```
 
 ### Logs
@@ -507,18 +401,13 @@ kubectl get events -A
 ```bash
 kubectl logs -n blog deploy/wordpress
 kubectl logs -n blog sts/mysql
-
-kubectl logs -n ingress-nginx deploy/ingress-nginx-controller
-kubectl logs -n monitoring deploy/kube-prometheus-stack-grafana
 ```
 
 ### SOPS
 
 ```bash
 sops file.enc.yaml
-
 sops --decrypt file.enc.yaml
-
 sops --encrypt --in-place file.enc.yaml
 ```
 
@@ -527,34 +416,12 @@ sops --encrypt --in-place file.enc.yaml
 ## Security Features
 
 * GitOps deployment with FluxCD
-* SOPS encrypted secrets
-* Age key encryption
-* FluxCD secret decryption
+* Encrypted secrets using SOPS and Age
 * NGINX Ingress with forwarded headers
 * Non-root containers where possible
 * Persistent storage for WordPress and MariaDB
+* Observability with Prometheus, Grafana, Loki, and Promtail
 * Infrastructure and application separation
-* Centralized logging with Loki
-* Monitoring with Prometheus and Grafana
 
 ---
 
-## Learning Objectives
-
-This repository demonstrates:
-
-* GitOps workflows with FluxCD
-* Kubernetes application deployment
-* Stateful workloads using MariaDB
-* Secret management using SOPS
-* Monitoring and observability
-* Ingress management
-* Bare-metal load balancing with MetalLB
-* Persistent storage configuration
-* Production-inspired Kubernetes architecture
-
----
-
-## License
-
-This repository is intended for educational, testing, development, and homelab environments. Use the production repository for production deployments and operational workloads.
