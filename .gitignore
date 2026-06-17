@@ -1,0 +1,67 @@
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Vim
+*.swp
+*.swo
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Terraform (if used)
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars
+crash.log
+
+# Kubernetes config
+kubeconfig
+.kube/
+
+# Secrets (plaintext only)
+secret.yaml
+secrets.yaml
+*-secret.yaml
+
+# Certificates and keys
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Environment files
+.env
+.env.*
+
+# Backup files
+*.bak
+*.backup
+
+# Kustomize local render output
+rendered.yaml
+*.rendered.yaml
+
+# Helm package artifacts
+charts/*.tgz
+
+# Ignore age private keys
+*.agekey
+.agekey
+
+# Keep encrypted manifests
+!*.enc.yaml

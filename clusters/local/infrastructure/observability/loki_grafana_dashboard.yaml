@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-loki-kubernetes-logs-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  loki-kubernetes-logs.json: |
+    {
+      "title": "Loki / Kubernetes Logs",
+      "uid": "loki-kubernetes-logs",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 3,
+      "refresh": "30s",
+      "editable": true,
+      "graphTooltip": 0,
+      "tags": ["loki", "kubernetes", "logs"],
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": { "type": "loki", "uid": "Loki" },
+            "query": "label_values(namespace)",
+            "refresh": 2,
+            "sort": 1,
+            "includeAll": true,
+            "allValue": ".+",
+            "multi": false,
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": ".+"
+            }
+          },
+          {
+            "name": "pod",
+            "label": "Pod",
+            "type": "query",
+            "datasource": { "type": "loki", "uid": "Loki" },
+            "query": "label_values({namespace=~\"${namespace:regex}\"}, pod)",
+            "refresh": 2,
+            "sort": 1,
+            "includeAll": true,
+            "allValue": ".+",
+            "multi": false,
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": ".+"
+            }
+          },
+          {
+            "name": "container",
+            "label": "Container",
+            "type": "query",
+            "datasource": { "type": "loki", "uid": "Loki" },
+            "query": "label_values({namespace=~\"${namespace:regex}\", pod=~\"${pod:regex}\"}, container)",
+            "refresh": 2,
+            "sort": 1,
+            "includeAll": true,
+            "allValue": ".+",
+            "multi": false,
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": ".+"
+            }
+          },
+          {
+            "name": "search",
+            "label": "Search",
+            "type": "textbox",
+            "current": {
+              "text": ".*",
+              "value": ".*"
+            }
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "logs",
+          "title": "Kubernetes Logs",
+          "datasource": {
+            "type": "loki",
+            "uid": "Loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 24,
+            "h": 18
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "wrapLogMessage": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none",
+            "enableLogDetails": true
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "Loki"
+              },
+              "expr": "{namespace=~\"${namespace:regex}\", pod=~\"${pod:regex}\", container=~\"${container:regex}\"} |~ \"${search}\""
+            }
+          ]
+        }
+      ]
+    }

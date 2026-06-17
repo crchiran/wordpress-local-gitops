@@ -1,0 +1,285 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: flux-system
+spec:
+  interval: 10m
+  timeout: 15m
+  releaseName: kube-prometheus-stack
+  targetNamespace: monitoring
+
+  install:
+    createNamespace: true
+    crds: CreateReplace
+    remediation:
+      retries: 3
+
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 65.5.0
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+
+  values:
+    prometheus:
+      enabled: true
+      prometheusSpec:
+        retention: 15d
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: nfs-client
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 5Gi
+
+    alertmanager:
+      enabled: true
+      alertmanagerSpec:
+        replicas: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: nfs-client
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 5Gi
+
+    grafana:
+      enabled: true
+
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+
+      image:
+        repository: grafana/grafana
+        tag: 11.2.2
+
+      persistence:
+        enabled: true
+        type: pvc
+        storageClassName: nfs-client
+        accessModes:
+          - ReadWriteOnce
+        size: 5Gi
+        finalizers:
+          - kubernetes.io/pvc-protection
+
+      sidecar:
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          labelValue: "1"
+          searchNamespace: ALL
+          provider:
+            foldersFromFilesStructure: true
+
+      grafana.ini:
+        security:
+          allow_embedding: false
+          cookie_secure: false
+          cookie_samesite: lax
+        auth.anonymous:
+          enabled: false
+        users:
+          allow_sign_up: false
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+      ingress:
+        enabled: false
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+
+      additionalDataSources:
+        - name: Loki
+          uid: Loki
+          type: loki
+          access: proxy
+          url: http://loki.monitoring.svc.cluster.local:3100
+          jsonData:
+            timeInterval: 10s
+            maxLines: 1000
+            httpHeaderName1: X-Scope-OrgID
+          secureJsonData:
+            httpHeaderValue1: fakeapiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: flux-system
+spec:
+  interval: 10m
+  timeout: 15m
+  releaseName: kube-prometheus-stack
+  targetNamespace: monitoring
+
+  install:
+    createNamespace: true
+    crds: CreateReplace
+    remediation:
+      retries: 3
+
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 65.5.0
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+
+  values:
+    prometheus:
+      enabled: true
+      prometheusSpec:
+        retention: 15d
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: nfs-client
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 5Gi
+
+    alertmanager:
+      enabled: true
+      alertmanagerSpec:
+        replicas: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: nfs-client
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 5Gi
+
+    grafana:
+      enabled: true
+
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+
+      image:
+        repository: grafana/grafana
+        tag: 11.2.2
+
+      persistence:
+        enabled: true
+        type: pvc
+        storageClassName: nfs-client
+        accessModes:
+          - ReadWriteOnce
+        size: 5Gi
+        finalizers:
+          - kubernetes.io/pvc-protection
+
+      sidecar:
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          labelValue: "1"
+          searchNamespace: ALL
+          provider:
+            foldersFromFilesStructure: true
+
+      grafana.ini:
+        security:
+          allow_embedding: false
+          cookie_secure: false
+          cookie_samesite: lax
+        auth.anonymous:
+          enabled: false
+        users:
+          allow_sign_up: false
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+      ingress:
+        enabled: false
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+
+      additionalDataSources:
+        - name: Loki
+          uid: Loki
+          type: loki
+          access: proxy
+          url: http://loki.monitoring.svc.cluster.local:3100
+          jsonData:
+            timeInterval: 10s
+            maxLines: 1000
+            httpHeaderName1: X-Scope-OrgID
+          secureJsonData:
+            httpHeaderValue1: fake
