@@ -1,0 +1,223 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: wordpress-pdb
+  namespace: blog
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: wordpress
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  namespace: blog
+  labels:
+    app: wordpress
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      app: wordpress
+
+  template:
+    metadata:
+      labels:
+        app: wordpress
+
+    spec:
+      automountServiceAccountToken: false
+
+      securityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+        supplementalGroups: [33]
+
+      initContainers:
+        - name: init-wordpress-files
+          image: wordpress:6.8.2-php8.3-apache
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /var/www/html/wp-load.php ]; then
+                echo "WordPress core files missing. Copying from image..."
+                cp -an /usr/src/wordpress/. /var/www/html/
+                echo "Copy complete."
+              else
+                echo "WordPress files already present. Skipping copy."
+              fi
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: wordpress-data
+              mountPath: /var/www/html
+
+      containers:
+        - name: wordpress
+          image: wordpress:6.8.2-php8.3-apache
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: mysql.blog.svc.cluster.local:3306
+
+            - name: WORDPRESS_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-user
+
+            - name: WORDPRESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+
+            - name: WORDPRESS_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-database
+
+            - name: WORDPRESS_TABLE_PREFIX
+              value: b7x_
+
+            - name: WORDPRESS_AUTH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: AUTH_KEY
+            - name: WORDPRESS_SECURE_AUTH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: SECURE_AUTH_KEY
+            - name: WORDPRESS_LOGGED_IN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: LOGGED_IN_KEY
+            - name: WORDPRESS_NONCE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: NONCE_KEY
+            - name: WORDPRESS_AUTH_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: AUTH_SALT
+            - name: WORDPRESS_SECURE_AUTH_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: SECURE_AUTH_SALT
+            - name: WORDPRESS_LOGGED_IN_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: LOGGED_IN_SALT
+            - name: WORDPRESS_NONCE_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: wordpress-salts
+                  key: NONCE_SALT
+
+            - name: WORDPRESS_CONFIG_EXTRA
+              value: |
+                define('DISALLOW_FILE_EDIT', true);
+                # FIX: enforce HTTPS for the admin area — your ingress
+                # must terminate TLS and forward X-Forwarded-Proto.
+                define('FORCE_SSL_ADMIN', false); # set true when HTTPS is enabled
+                # Trust the ingress reverse-proxy
+                if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+                    $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+                    $_SERVER['HTTPS'] = 'on';
+                }
+
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+          startupProbe:
+            httpGet:
+              path: /wp-login.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /wp-login.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /wp-login.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            initialDelaySeconds: 0
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          volumeMounts:
+            - name: wordpress-data
+              mountPath: /var/www/html
+
+      volumes:
+        - name: wordpress-data
+          persistentVolumeClaim:
+            claimName: wordpress-data
