@@ -1,0 +1,16 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-ingress-nginx
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: infra-metallb
+  interval: 10m
+  path: ./clusters/local/infrastructure/ingress-nginx
+  prune: true
+  wait: true
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

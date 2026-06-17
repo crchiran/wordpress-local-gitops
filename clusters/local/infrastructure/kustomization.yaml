@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - metallb-infra.yaml
+  - ingress-nginx-infra.yaml
