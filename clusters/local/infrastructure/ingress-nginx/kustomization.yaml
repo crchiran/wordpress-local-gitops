@@ -4,4 +4,3 @@ resources:
   - namespace.yaml
   - repo.yaml
   - helmrelease.yaml
-  - custom-error-backend.yaml
