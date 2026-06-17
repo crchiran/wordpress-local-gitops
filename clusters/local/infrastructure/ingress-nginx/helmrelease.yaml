@@ -42,7 +42,6 @@ spec:
 
       config:
         use-forwarded-headers: "true"
-        hide-headers: "Server"
         server-tokens: "false"
 
       serviceAccount:
